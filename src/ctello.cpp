@@ -167,6 +167,7 @@ Tello::Tello()
     spdlog::set_pattern(LOG_PATTERN);
     auto log_level = ::GetLogLevelFromEnv("SPDLOG_LEVEL");
     spdlog::set_level(log_level);
+    Bind();
 }
 Tello::Tello(bool withThreads)
 {
@@ -197,14 +198,22 @@ void Tello::listenToState()
             auto response = GetState();
             if (response && response.has_value())
             {
-                auto startHeightPosition = response.value().find("tof:") + 4;
-                auto endHeightPosition =
-                    response.value().substr(startHeightPosition).find(';');
 
-                height = std::stoi(response.value().substr(startHeightPosition,
+                auto startYawPosition = response.value().find("yaw:") + 4;
+                auto endYawPosition =
+                    response.value().substr(startYawPosition).find(';');
+
+                yaw = std::stoi(response.value().substr(startYawPosition,
+                                                        endYawPosition));
+                std::string stringFromYawPosition = response.value().substr(endYawPosition);
+                auto startHeightPosition = stringFromYawPosition.find("tof:") + 4;
+                auto endHeightPosition =
+                    stringFromYawPosition.substr(startHeightPosition).find(';');
+
+                height = std::stoi(stringFromYawPosition.substr(startHeightPosition,
                                                            endHeightPosition));
                 std::string stringFromHeight =
-                    response.value().substr(endHeightPosition);
+                    stringFromYawPosition.substr(endHeightPosition);
                 auto startBatteryPosition = stringFromHeight.find("bat:") + 4;
                 auto endBatteryPosition =
                     stringFromHeight.substr(startBatteryPosition).find(';');
@@ -230,6 +239,8 @@ void Tello::listenToResponses()
             {
                 std::string answer(response.value());
                 responses.emplace_back(answer);
+            }else{
+                std::this_thread::sleep_for(std::chrono::microseconds (200));
             }
         }
         catch (...)
@@ -584,6 +595,26 @@ int Tello::GetBatteryState(int amountOfTries)
         return 100;
     }
     auto startBatteryPosition = response.value().find("bat:") + 4;
+    auto endBatteryPosition =
+        response.value().substr(startBatteryPosition).find(';');
+    int Battery = std::stoi(
+        response.value().substr(startBatteryPosition, endBatteryPosition));
+    return Battery;
+}
+int Tello::GetYawState(int amountOfTries)
+{
+    std::optional<std::string> response;
+    while (!response.has_value() && amountOfTries-- != 0)
+    {
+        response = GetState();
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
+    }
+    if (amountOfTries <= 0)
+    {
+        std::cout << "cant get state" << std::endl;
+        return 100;
+    }
+    auto startBatteryPosition = response.value().find("yaw:") + 4;
     auto endBatteryPosition =
         response.value().substr(startBatteryPosition).find(';');
     int Battery = std::stoi(

@@ -80,7 +80,7 @@ public:
               int local_server_command_port = LOCAL_SERVER_STATE_PORT);
     int GetBatteryStatus();
     int GetHeightStatus();
-    int GetHeightState(int amountOfTries = 20);
+    int GetHeightState(int amountOfTries = 5000);
     std::string GetAccelerationStatus();
     double GetSpeedStatus();
     bool SendCommand(const std::string& command);
@@ -99,8 +99,11 @@ public:
     Tello(const Tello&&) = delete;
     Tello& operator=(const Tello&) = delete;
     Tello& operator=(const Tello&&) = delete;*/
-    int GetBatteryState(int amountOfTries = 20);
+    int GetBatteryState(int amountOfTries = 5000);
+    int GetYawState(int amountOfTries= 5000);
+
     int GetHeight() { return height; };
+    int GetYaw() { return yaw; };
     int GetBattery() { return battery; };
 
 private:
@@ -113,6 +116,7 @@ private:
     int m_local_client_command_port{LOCAL_CLIENT_COMMAND_PORT};
     sockaddr_storage m_tello_server_command_addr{};
     int height;
+    int yaw;
     int battery;
     std::thread responseReceiver;
     std::thread stateReceiver;
