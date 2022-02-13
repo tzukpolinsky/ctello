@@ -18,8 +18,6 @@
 
 #include "ctello.h"
 
-const char* const LOG_PATTERN = "[%D %T] [ctello] [%^%l%$] %v";
-
 namespace
 {
 
@@ -257,6 +255,9 @@ void Tello::createSockets()
     optval = 1;
     ioctlsocket(m_command_sockfd, FIONBIO, &optval);
 #endif
+    setsockopt(m_command_sockfd, SOL_SOCKET, SO_REUSEADDR, &optval,
+               sizeof(int));
+    setsockopt(m_state_sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(int));
 }
 bool Tello::BindWithOutStatus(const int local_client_command_port,
                               int local_server_command_port)
