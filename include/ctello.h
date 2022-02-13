@@ -48,7 +48,6 @@
 #include <cerrno>
 #include <cstdlib>
 #include <thread>
-#include "spdlog/spdlog.h"
 // This is the server running in Tello, where we send commands to and we
 // receive responses from
 const char* const TELLO_SERVER_IP{"192.168.10.1"};

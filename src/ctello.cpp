@@ -22,29 +22,6 @@ const char* const LOG_PATTERN = "[%D %T] [ctello] [%^%l%$] %v";
 
 namespace
 {
-// Reads the spdlog level from the given environment variable name.
-spdlog::level::level_enum GetLogLevelFromEnv(const std::string& var_name)
-{
-    // clang-format off
-    std::unordered_map<std::string, spdlog::level::level_enum> name_to_enum = {
-        {"trace", spdlog::level::trace},
-        {"debug", spdlog::level::debug},
-        {"info", spdlog::level::info},
-        {"warn", spdlog::level::warn},
-        {"error", spdlog::level::err},
-        {"critical", spdlog::level::critical},
-        {"off", spdlog::level::off}
-    };
-    // clang-format on
-    const char* const name_c_str = std::getenv(var_name.c_str());
-    if (name_c_str == nullptr)
-    {
-        // Info is the default
-        return spdlog::level::info;
-    }
-    const std::string name{name_c_str};
-    return name_to_enum[name];
-}
 
 // Binds the given socket file descriptor ot the given port.
 // Returns whether it suceeds or not and the error message.
@@ -164,9 +141,6 @@ Tello::Tello()
     }
 #endif
     createSockets();
-    spdlog::set_pattern(LOG_PATTERN);
-    auto log_level = ::GetLogLevelFromEnv("SPDLOG_LEVEL");
-    spdlog::set_level(log_level);
     Bind();
 }
 Tello::Tello(bool withThreads)
@@ -179,14 +153,11 @@ Tello::Tello(bool withThreads)
     }
 #endif
     createSockets();
-    spdlog::set_pattern(LOG_PATTERN);
-    auto log_level = ::GetLogLevelFromEnv("SPDLOG_LEVEL");
-    spdlog::set_level(log_level);
     responses = std::vector<std::string>{};
     BindWithOutStatus();
     responseReceiver = std::thread(&Tello::listenToResponses, this);
     stateReceiver = std::thread(&Tello::listenToState, this);
-    spdlog::info("Finding Tello ...");
+    std::cout << "Finding Tello ..." << std::endl;
     SendCommandWithResponse("command");
 }
 void Tello::listenToState()
@@ -198,20 +169,21 @@ void Tello::listenToState()
             auto response = GetState();
             if (response && response.has_value())
             {
-
                 auto startYawPosition = response.value().find("yaw:") + 4;
                 auto endYawPosition =
                     response.value().substr(startYawPosition).find(';');
 
-                yaw = std::stoi(response.value().substr(startYawPosition,
-                                                        endYawPosition));
-                std::string stringFromYawPosition = response.value().substr(endYawPosition);
-                auto startHeightPosition = stringFromYawPosition.find("tof:") + 4;
+                yaw = std::stoi(
+                    response.value().substr(startYawPosition, endYawPosition));
+                std::string stringFromYawPosition =
+                    response.value().substr(endYawPosition);
+                auto startHeightPosition =
+                    stringFromYawPosition.find("tof:") + 4;
                 auto endHeightPosition =
                     stringFromYawPosition.substr(startHeightPosition).find(';');
 
-                height = std::stoi(stringFromYawPosition.substr(startHeightPosition,
-                                                           endHeightPosition));
+                height = std::stoi(stringFromYawPosition.substr(
+                    startHeightPosition, endHeightPosition));
                 std::string stringFromHeight =
                     stringFromYawPosition.substr(endHeightPosition);
                 auto startBatteryPosition = stringFromHeight.find("bat:") + 4;
@@ -224,7 +196,7 @@ void Tello::listenToState()
         }
         catch (...)
         {
-            spdlog::error("something happend at listenToState");
+            std::cerr << "something happend at listenToState" << std::endl;
         }
     }
 }
@@ -239,13 +211,15 @@ void Tello::listenToResponses()
             {
                 std::string answer(response.value());
                 responses.emplace_back(answer);
-            }else{
-                std::this_thread::sleep_for(std::chrono::microseconds (200));
+            }
+            else
+            {
+                std::this_thread::sleep_for(std::chrono::microseconds(200));
             }
         }
         catch (...)
         {
-            spdlog::error("something happend at listenToResponses");
+            std::cerr << "something happend at listenToResponses" << std::endl;
         }
     }
 }
@@ -292,7 +266,7 @@ bool Tello::BindWithOutStatus(const int local_client_command_port,
         ::BindSocketToPort(m_command_sockfd, local_client_command_port);
     if (!result.first)
     {
-        spdlog::error(result.second);
+        std::cerr << result.second << std::endl;
         return false;
     }
     m_local_client_command_port = local_client_command_port;
@@ -300,7 +274,7 @@ bool Tello::BindWithOutStatus(const int local_client_command_port,
                               &m_tello_server_command_addr);
     if (!result.first)
     {
-        spdlog::error(result.second);
+        std::cerr << result.second << std::endl;
         return false;
     }
 
@@ -308,7 +282,7 @@ bool Tello::BindWithOutStatus(const int local_client_command_port,
     result = ::BindSocketToPort(m_state_sockfd, local_server_command_port);
     if (!result.first)
     {
-        spdlog::error(result.second);
+        std::cerr << result.second << std::endl;
         return false;
     }
 
@@ -322,7 +296,7 @@ bool Tello::Bind(const int local_client_command_port,
         ::BindSocketToPort(m_command_sockfd, local_client_command_port);
     if (!result.first)
     {
-        spdlog::error(result.second);
+        std::cerr << result.second << std::endl;
         return false;
     }
     m_local_client_command_port = local_client_command_port;
@@ -330,7 +304,7 @@ bool Tello::Bind(const int local_client_command_port,
                               &m_tello_server_command_addr);
     if (!result.first)
     {
-        spdlog::error(result.second);
+        std::cerr << result.second << std::endl;
         return false;
     }
 
@@ -338,14 +312,14 @@ bool Tello::Bind(const int local_client_command_port,
     result = ::BindSocketToPort(m_state_sockfd, local_server_command_port);
     if (!result.first)
     {
-        spdlog::error(result.second);
+        std::cerr << result.second << std::endl;
         return false;
     }
 
     // Finding Tello
-    spdlog::info("Finding Tello ...");
+    std::cout << "Finding Tello ..." << std::endl;
     FindTello();
-    spdlog::info("Entered SDK mode");
+    std::cout << "Entered SDK mode" << std::endl;
 
     ShowTelloInfo();
     return true;
@@ -369,9 +343,9 @@ std::string Tello::GetTelloName()
 }
 bool Tello::EasyLanding()
 {
-    while (!SendCommandWithResponseByThread("down 20"));
+    while (!SendCommandWithResponseByThread("down 20"))
+        ;
     return SendCommandWithResponse("land");
-
 }
 double Tello::GetSpeedStatus()
 {
@@ -449,22 +423,22 @@ void Tello::ShowTelloInfo()
     SendCommand("sn?");
     while (!(response = ReceiveResponse()))
         ;
-    spdlog::info("Serial Number: {0}", *response);
+    std::cout << "Serial Number: " << *response << std::endl;
 
     SendCommand("sdk?");
     while (!(response = ReceiveResponse()))
         ;
-    spdlog::info("Tello SDK:     {0}", *response);
+    std::cout << "Tello SDK: " << *response << std::endl;
 
     SendCommand("wifi?");
     while (!(response = ReceiveResponse()))
         ;
-    spdlog::info("Wi-Fi Signal:  {0}", *response);
+    std::cout << "Wi-Fi Signal: " << *response << std::endl;
 
     SendCommand("battery?");
     while (!(response = ReceiveResponse()))
         ;
-    spdlog::info("Battery:       {0}", *response);
+    std::cout << "Battery: " << *response << std::endl;
 }
 bool Tello::SendCommand(const std::string& command)
 {
@@ -474,12 +448,9 @@ bool Tello::SendCommand(const std::string& command)
     const int bytes{result.first};
     if (bytes == -1)
     {
-        spdlog::error(result.second);
+        std::cerr << result.second << std::endl;
         return false;
     }
-    spdlog::debug("127.0.0.1:{} >>>> {} bytes >>>> {}:{}: {}",
-                  m_local_client_command_port, bytes, TELLO_SERVER_IP,
-                  TELLO_SERVER_COMMAND_PORT, command);
     return true;
 }
 bool Tello::SendCommandWithResponse(const std::string& command,
@@ -491,7 +462,7 @@ bool Tello::SendCommandWithResponse(const std::string& command,
     const int bytes{result.first};
     if (bytes == -1)
     {
-        spdlog::error(result.second);
+        std::cerr << result.second << std::endl;
         return false;
     }
     std::optional<std::string> response = ReceiveResponse();
@@ -509,11 +480,8 @@ bool Tello::SendCommandWithResponse(const std::string& command,
         std::this_thread::sleep_for(std::chrono::microseconds(200));
     }
     std::string strAnswer(response.value());
-    spdlog::info(strAnswer + ": " +
-                 std::string(message.begin(), message.end()));
-    spdlog::debug("127.0.0.1:{} >>>> {} bytes >>>> {}:{}: {}",
-                  m_local_client_command_port, bytes, TELLO_SERVER_IP,
-                  TELLO_SERVER_COMMAND_PORT, command);
+    std::cout << strAnswer + ": " + std::string(message.begin(), message.end())
+              << std::endl;
     bool isSuccess = strAnswer.find("ok") != std::string::npos ||
                      strAnswer.find("OK") != std::string::npos;
     return isSuccess;
@@ -527,7 +495,7 @@ bool Tello::SendCommandWithResponseByThread(const std::string& command,
     const int bytes{result.first};
     if (bytes == -1)
     {
-        spdlog::error(result.second);
+        std::cerr << result.second << std::endl;
         return false;
     }
     std::string strAnswer;
@@ -539,8 +507,9 @@ bool Tello::SendCommandWithResponseByThread(const std::string& command,
         }
         else
         {
-            spdlog::info("no response: " +
-                         std::string(message.begin(), message.end()));
+            std::cout << "no response: " +
+                             std::string(message.begin(), message.end())
+                      << std::endl;
             return false;
         }
         if (responses.empty())
@@ -553,11 +522,8 @@ bool Tello::SendCommandWithResponseByThread(const std::string& command,
     } while (strAnswer.empty());
 
     responses.pop_back();
-    spdlog::info(strAnswer + ": " +
-                 std::string(message.begin(), message.end()));
-    spdlog::debug("127.0.0.1:{} >>>> {} bytes >>>> {}:{}: {}",
-                  m_local_client_command_port, bytes, TELLO_SERVER_IP,
-                  TELLO_SERVER_COMMAND_PORT, command);
+    std::cout << strAnswer + ": " + std::string(message.begin(), message.end())
+              << std::endl;
     bool isSuccess = strAnswer.find("ok") != std::string::npos;
     return isSuccess;
 }
@@ -576,9 +542,6 @@ std::optional<std::string> Tello::ReceiveResponse()
     std::string response{buffer.begin(), buffer.end()};
     // Some responses contain trailing white spaces.
     response.erase(response.find_last_not_of(" \n\r\t") + 1);
-    spdlog::debug("127.0.0.1:{} <<<< {} bytes <<<< {}:{}: {}",
-                  m_local_client_command_port, bytes, TELLO_SERVER_IP,
-                  TELLO_SERVER_COMMAND_PORT, response);
     return response;
 }
 int Tello::GetBatteryState(int amountOfTries)
@@ -655,9 +618,6 @@ std::optional<std::string> Tello::GetState()
     std::string response{buffer.begin(), buffer.end()};
     // Some responses contain trailing white spaces.
     response.erase(response.find_last_not_of(" \n\r\t") + 1);
-    spdlog::debug("127.0.0.1:{} <<<< {} bytes <<<< {}:{}: <state>",
-                  m_local_client_command_port, bytes, TELLO_SERVER_IP,
-                  TELLO_SERVER_COMMAND_PORT);
     return response;
 }
 }  // namespace ctello
