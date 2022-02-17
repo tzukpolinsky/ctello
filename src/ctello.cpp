@@ -138,6 +138,7 @@ Tello::Tello()
         exit(1);
     }
 #endif
+    withThread = false;
     createSockets();
     Bind();
 }
@@ -150,6 +151,7 @@ Tello::Tello(bool withThreads)
         exit(1);
     }
 #endif
+    withThread = true;
     createSockets();
     responses = std::vector<std::string>{};
     BindWithOutStatus();
@@ -243,8 +245,11 @@ void Tello::closeSockets()
 #endif
     m_command_sockfd = 0;
     m_state_sockfd = 0;
-    responseReceiver.join();
-    stateReceiver.join();
+    if (withThread)
+    {
+        responseReceiver.join();
+        stateReceiver.join();
+    }
 }
 void Tello::createSockets()
 {
@@ -255,9 +260,11 @@ void Tello::createSockets()
     optval = 1;
     ioctlsocket(m_command_sockfd, FIONBIO, &optval);
 #endif
-    setsockopt(m_command_sockfd, SOL_SOCKET, SO_REUSEADDR, &optval,
+    optval = 1;
+    setsockopt(m_command_sockfd, SOL_SOCKET, SO_REUSEADDR, (const char*)&optval,
                sizeof(int));
-    setsockopt(m_state_sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(int));
+    setsockopt(m_state_sockfd, SOL_SOCKET, SO_REUSEADDR, (const char*)&optval,
+               sizeof(int));
 }
 bool Tello::BindWithOutStatus(const int local_client_command_port,
                               int local_server_command_port)

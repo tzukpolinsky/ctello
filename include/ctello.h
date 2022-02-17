@@ -126,6 +126,7 @@ private:
         int local_client_command_port = LOCAL_CLIENT_COMMAND_PORT,
         int local_server_command_port = LOCAL_SERVER_STATE_PORT);
     int optval = 1;
+    bool withThread;
 #if defined(_WIN32)
     WSADATA wsa;
     DWORD optval;
