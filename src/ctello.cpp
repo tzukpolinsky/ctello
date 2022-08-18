@@ -550,6 +550,7 @@ std::optional<std::string> Tello::ReceiveResponse()
     std::string response{buffer.begin(), buffer.end()};
     // Some responses contain trailing white spaces.
     response.erase(response.find_last_not_of(" \n\r\t") + 1);
+    response = response.substr(0,response.find_last_not_of('\0')+1);
     return response;
 }
 int Tello::GetBatteryState(int amountOfTries)

@@ -26,11 +26,11 @@ using ctello::Tello;
 int main()
 {
     Tello tello{};
-    if (!tello.Bind())
-    {
-        return 0;
-    }
-
     tello.SendCommand("takeoff");
-    tello.SendCommand("sn?");
+    for (int i = 0; i < 20; ++i)
+    {
+        tello.SendCommand("rc 0 40 0 0");
+        sleep(1);
+    }
+    tello.SendCommandWithResponse("land");
 }
