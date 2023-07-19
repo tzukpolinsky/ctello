@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/check.dir/examples/flip.cpp.o -o check  libctello.a -lpthread 
