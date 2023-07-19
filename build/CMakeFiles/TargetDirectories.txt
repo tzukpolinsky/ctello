@@ -1,0 +1,8 @@
+/home/jerry-ubuntu/contribute/ctello/build/CMakeFiles/ctello.dir
+/home/jerry-ubuntu/contribute/ctello/build/CMakeFiles/check.dir
+/home/jerry-ubuntu/contribute/ctello/build/CMakeFiles/edit_cache.dir
+/home/jerry-ubuntu/contribute/ctello/build/CMakeFiles/rebuild_cache.dir
+/home/jerry-ubuntu/contribute/ctello/build/CMakeFiles/list_install_components.dir
+/home/jerry-ubuntu/contribute/ctello/build/CMakeFiles/install.dir
+/home/jerry-ubuntu/contribute/ctello/build/CMakeFiles/install/local.dir
+/home/jerry-ubuntu/contribute/ctello/build/CMakeFiles/install/strip.dir
